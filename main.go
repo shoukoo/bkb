@@ -6,9 +6,8 @@ import (
 	"os"
 
 	"github.com/chzyer/readline"
-	"github.com/shoukoo/am2/buildkite"
-	"github.com/shoukoo/am2/list"
-	"github.com/shoukoo/am2/screen"
+	"github.com/shoukoo/bkb/list"
+	"github.com/shoukoo/bkb/screen"
 )
 
 type tpe struct {
@@ -39,7 +38,7 @@ func run() error {
 	rl.Write([]byte(screen.HideCursor))
 	t := screen.New(rl)
 
-	client, err := buildkite.BuildkiteClient()
+	client, err := list.BuildkiteClient()
 	if err != nil {
 		return err
 	}

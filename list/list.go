@@ -8,8 +8,7 @@ import (
 	"os/exec"
 	"reflect"
 	"runtime"
-
-	b "github.com/buildkite/go-buildkite/buildkite"
+	"strings"
 )
 
 const NotFound = -1
@@ -32,8 +31,8 @@ func (c *Config) Start() (*List, error) {
 }
 
 type List struct {
-	items     []*interface{}
-	scope     []*interface{} // list to display on the screen
+	items     []interface{}
+	scope     []interface{} // list to display on the screen
 	cursor    int
 	size      int
 	start     int
@@ -85,11 +84,11 @@ func New(item interface{}, size int) (*List, error) {
 	}
 
 	slice := reflect.ValueOf(item)
-	values := make([]*interface{}, slice.Len())
+	values := make([]interface{}, slice.Len())
 
 	for i, _ := range values {
 		v := slice.Index(i).Interface()
-		values[i] = &v
+		values[i] = v
 	}
 
 	return &List{size: size, items: values, scope: values}, nil
@@ -117,7 +116,7 @@ func (l *List) Items() ([]interface{}, int) {
 			active = j
 		}
 
-		result = append(result, *l.scope[i])
+		result = append(result, l.scope[i])
 	}
 
 	return result, active
@@ -132,16 +131,22 @@ func (l *List) Open() {
 		v = reflect.Indirect(v)
 	}
 
-	if v.Kind() != reflect.Interface {
+	if v.Kind() != reflect.Struct {
 		log.Fatalf("Not an interface %v", v.Kind())
 	}
 
-	if field, ok := v.Interface().(b.Build); ok {
-		err := open(*field.WebURL)
-		if err != nil {
-			log.Fatalf("%v", err)
+	for i := 0; i < v.NumField(); i++ {
+
+		if v.Type().Field(i).Name == "WebURL" {
+
+			err := open(v.Field(i).String())
+			if err != nil {
+				log.Fatalf("%v", err)
+			}
+			return
+
 		}
-		return
+
 	}
 
 	log.Fatalf("Can't find URL")
@@ -232,9 +237,25 @@ func (l *List) CanPageUp() bool {
 
 // Search
 func (l *List) Search(key string) {
+
+	key = strings.Trim(key, " ")
 	l.cursor = 0
 	l.start = 0
-	var scope []*interface{}
+	l.search(key)
+}
+
+func (l *List) search(key string) {
+	if len(key) == 0 {
+		l.scope = l.items
+		return
+	}
+	var scope []interface{}
+	for _, v := range l.items {
+		if ok := strings.Contains(fmt.Sprint(v), key); ok {
+			scope = append(scope, v)
+		}
+	}
+
 	l.scope = scope
 }
 

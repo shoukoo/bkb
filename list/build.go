@@ -1,4 +1,4 @@
-package buildkite
+package list
 
 import (
 	"fmt"
@@ -7,12 +7,24 @@ import (
 	"runtime"
 
 	"github.com/buildkite/go-buildkite/buildkite"
-	"github.com/shoukoo/am2/list"
 )
 
 type Client struct {
 	BKClient *buildkite.Client
-	Builds   []buildkite.Build
+	Builds   []Build
+}
+
+type Build struct {
+	Pipeline     string
+	Message      string
+	Branch       string
+	Status       string
+	Commit       string
+	Creator      string
+	CreatorEmail string
+	StartedAt    string
+	ENV          string
+	WebURL       string
 }
 
 func BuildkiteClient() (*Client, error) {
@@ -40,7 +52,7 @@ func (c *Client) GetRecentBuilds(org string) error {
 	var r *buildkite.Response
 	var page int
 	var err error
-	var builds []buildkite.Build
+	var builds []Build
 	var limit = 1
 
 	for {
@@ -51,7 +63,7 @@ func (c *Client) GetRecentBuilds(org string) error {
 
 		listConfig := BuildListOptions(page)
 		p, r, err = c.BKClient.Builds.ListByOrg(org, listConfig)
-		builds = append(builds, p...)
+		builds = append(builds, reMapToBuild(p)...)
 
 		if err != nil {
 			return err
@@ -73,19 +85,41 @@ func (c *Client) GetRecentBuilds(org string) error {
 	return nil
 }
 
-func (c *Client) Templates() *list.SelectTemplates {
-	return &list.SelectTemplates{
-		Active:   "> {{.Pipeline.Slug}} [ {{.Branch}} ]",
-		Inactive: "  {{.Pipeline.Slug}} [ {{.Branch}} ]",
+func reMapToBuild(b []buildkite.Build) []Build {
+	var builds []Build
+	for _, v := range b {
+		build := Build{
+			Message:      *v.Message,
+			Branch:       *v.Branch,
+			Pipeline:     *v.Pipeline.Slug,
+			Status:       *v.State,
+			Commit:       *v.Commit,
+			Creator:      v.Creator.Name,
+			CreatorEmail: v.Creator.Email,
+			StartedAt:    v.StartedAt.Local().String(),
+			ENV:          fmt.Sprintf("%v", v.Env),
+			WebURL:       *v.WebURL,
+		}
+
+		builds = append(builds, build)
+
+	}
+	return builds
+}
+
+func (c *Client) Templates() *SelectTemplates {
+	return &SelectTemplates{
+		Active:   "> {{.Pipeline}} [ {{.Branch}} ]",
+		Inactive: "  {{.Pipeline}} [ {{.Branch}} ]",
 		Details: `
--------------- Info --------------
+-------------- INFO --------------
 Message: {{.Message}}
 Branch: {{.Branch}}
-Status: {{.State}}
+Status: {{.Status}}
 Commit: {{.Commit}}
-Creator: {{.Creator.Name}} ({{.Creator.Email}})
+Creator: {{.Creator}} ({{.CreatorEmail}})
 Started: {{.StartedAt}}
-ENV: {{.Env}}
+ENV: {{.ENV}}
 `,
 	}
 }
