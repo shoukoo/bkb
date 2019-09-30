@@ -17,9 +17,11 @@ type SelectTemplates struct {
 }
 
 var FuncMap = template.FuncMap{
-	"red":    color.New(color.FgYellow).SprintFunc(),
-	"yellow": color.New(color.FgRed).SprintFunc(),
-	"blue":   color.New(color.FgBlue).SprintFunc(),
-	"green":  color.New(color.FgGreen).SprintFunc(),
-	"hiblue": color.New(color.FgHiBlue).SprintFunc(),
+	"red":     color.New(color.FgRed).SprintFunc(),
+	"yellow":  color.New(color.FgYellow).SprintFunc(),
+	"blue":    color.New(color.FgBlue).SprintFunc(),
+	"green":   color.New(color.FgGreen).SprintFunc(),
+	"hiblue":  color.New(color.FgHiBlue).SprintFunc(),
+	"cyan":    color.New(color.FgCyan).SprintFunc(),
+	"magenta": color.New(color.FgMagenta).SprintFunc(),
 }

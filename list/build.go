@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"time"
 
 	"github.com/buildkite/go-buildkite/buildkite"
 )
@@ -25,6 +26,7 @@ type Build struct {
 	CreatedAt    string
 	ENV          string
 	WebURL       string
+	Elapsed      string
 }
 
 func BuildkiteClient() (*Client, error) {
@@ -87,7 +89,9 @@ func (c *Client) GetRecentBuilds(org string) error {
 
 func reMapToBuild(b []buildkite.Build) []Build {
 	var builds []Build
+
 	for _, v := range b {
+		elapsed := time.Now().Sub(v.CreatedAt.Time)
 		build := Build{
 			Message:      *v.Message,
 			Branch:       *v.Branch,
@@ -97,6 +101,7 @@ func reMapToBuild(b []buildkite.Build) []Build {
 			Creator:      v.Creator.Name,
 			CreatorEmail: v.Creator.Email,
 			CreatedAt:    v.CreatedAt.Local().String(),
+			Elapsed:      elapsed.Truncate(time.Second).String(),
 			ENV:          fmt.Sprintf("%v", v.Env),
 			WebURL:       *v.WebURL,
 		}
@@ -109,17 +114,18 @@ func reMapToBuild(b []buildkite.Build) []Build {
 
 func (c *Client) Templates() *SelectTemplates {
 	return &SelectTemplates{
-		Active:   `{{">" | hiblue}} {{.Pipeline}} [ {{.Branch | blue}} ]`,
-		Inactive: "  {{.Pipeline}} [ {{.Branch | blue}} ]",
+		Active:   `{{"▶" | cyan}} [ {{.Branch | blue}} | {{.Status | yellow}} | {{.Elapsed | magenta}} ] {{.Pipeline}} `,
+		Inactive: `  [ {{.Branch | blue}} | {{.Status | yellow}} | {{.Elapsed | magenta}} ] {{.Pipeline}}`,
 		Details: `
--------------- INFO --------------
+{{"-------------- info --------------"}}
 Message: {{.Message}}
-Branch: {{.Branch}}
-Status: {{.Status | blue}}
-Commit: {{.Commit}}
+Branch:  {{.Branch | blue}}
+Status:  {{.Status | yellow}}
+Age:     {{.Elapsed | magenta}}
+Commit:  {{.Commit}}
 Creator: {{.Creator}} ({{.CreatorEmail}})
 Started: {{.CreatedAt}}
-ENV: {{.ENV}}
+ENV:     {{.ENV}}
 `,
 	}
 }
