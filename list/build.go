@@ -22,7 +22,7 @@ type Build struct {
 	Commit       string
 	Creator      string
 	CreatorEmail string
-	StartedAt    string
+	CreatedAt    string
 	ENV          string
 	WebURL       string
 }
@@ -96,7 +96,7 @@ func reMapToBuild(b []buildkite.Build) []Build {
 			Commit:       *v.Commit,
 			Creator:      v.Creator.Name,
 			CreatorEmail: v.Creator.Email,
-			StartedAt:    v.StartedAt.Local().String(),
+			CreatedAt:    v.CreatedAt.Local().String(),
 			ENV:          fmt.Sprintf("%v", v.Env),
 			WebURL:       *v.WebURL,
 		}
@@ -109,16 +109,16 @@ func reMapToBuild(b []buildkite.Build) []Build {
 
 func (c *Client) Templates() *SelectTemplates {
 	return &SelectTemplates{
-		Active:   "> {{.Pipeline}} [ {{.Branch}} ]",
-		Inactive: "  {{.Pipeline}} [ {{.Branch}} ]",
+		Active:   `{{">" | hiblue}} {{.Pipeline}} [ {{.Branch | blue}} ]`,
+		Inactive: "  {{.Pipeline}} [ {{.Branch | blue}} ]",
 		Details: `
 -------------- INFO --------------
 Message: {{.Message}}
 Branch: {{.Branch}}
-Status: {{.Status}}
+Status: {{.Status | blue}}
 Commit: {{.Commit}}
 Creator: {{.Creator}} ({{.CreatorEmail}})
-Started: {{.StartedAt}}
+Started: {{.CreatedAt}}
 ENV: {{.ENV}}
 `,
 	}

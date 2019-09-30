@@ -45,19 +45,19 @@ func (s *List) prepareTemplates() error {
 		tpls = &SelectTemplates{}
 	}
 
-	tpl, err := template.New("").Parse(tpls.Active)
+	tpl, err := template.New("").Funcs(FuncMap).Parse(tpls.Active)
 	if err != nil {
 		return err
 	}
 	tpls.active = tpl
 
-	tpl, err = template.New("").Parse(tpls.Inactive)
+	tpl, err = template.New("").Funcs(FuncMap).Parse(tpls.Inactive)
 	if err != nil {
 		return err
 	}
 	tpls.inactive = tpl
 
-	tpl, err = template.New("").Parse(tpls.Details)
+	tpl, err = template.New("").Funcs(FuncMap).Parse(tpls.Details)
 	if err != nil {
 		return err
 	}

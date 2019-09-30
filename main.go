@@ -76,8 +76,8 @@ func run() error {
 			if searchMode {
 				if len(searchInput) > 1 {
 					searchInput = searchInput[:len(searchInput)-1]
-					l.Search(string(searchInput))
 				} else {
+					l.Search(string(""))
 					searchInput = nil
 					searchMode = false
 				}
