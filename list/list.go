@@ -25,7 +25,10 @@ func (c *Config) Start() (*List, error) {
 	}
 
 	l.Templates = c.Templates
-	l.prepareTemplates()
+	err = l.prepareTemplates()
+	if err != nil {
+		return nil, err
+	}
 
 	return l, nil
 }
@@ -86,7 +89,7 @@ func New(item interface{}, size int) (*List, error) {
 	slice := reflect.ValueOf(item)
 	values := make([]interface{}, slice.Len())
 
-	for i, _ := range values {
+	for i := range values {
 		v := slice.Index(i).Interface()
 		values[i] = v
 	}

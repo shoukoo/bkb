@@ -1,23 +1,46 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"os"
 
+	"github.com/99designs/keyring"
 	"github.com/chzyer/readline"
+	"github.com/fatih/color"
 	"github.com/shoukoo/bkb/list"
 	"github.com/shoukoo/bkb/screen"
 )
 
-type tpe struct {
-	Name string
-	Type int
+var (
+	helpBool    bool
+	versionBool bool
+)
+
+func init() {
+	flag.BoolVar(&helpBool, "help", false, "help")
+	flag.BoolVar(&helpBool, "h", false, "help (shorthand)")
+	flag.BoolVar(&versionBool, "version", false, "version")
+	flag.BoolVar(&versionBool, "v", false, "version (shorthand)")
 }
 
 func run() error {
-	// Readline reads input from user
-	// TODO not fully understand how this pkg works
+
+	ring, _ := keyring.Open(keyring.Config{
+		ServiceName: "buildkite-beaver",
+	})
+
+	_ = ring.Set(keyring.Item{
+		Key:  "token",
+		Data: []byte("testt"),
+	})
+
+	i, _ := ring.Get("token")
+
+	fmt.Printf("%s", i.Data)
+
+	os.Exit(1)
 	stdin := readline.NewCancelableStdin(os.Stdin)
 	c := &readline.Config{}
 	err := c.Init()
@@ -35,14 +58,20 @@ func run() error {
 		return err
 	}
 
-	rl.Write([]byte(screen.HideCursor))
+	_, err = rl.Write([]byte(screen.HideCursor))
+	if err != nil {
+		return err
+	}
 	t := screen.New(rl)
 
 	client, err := list.BuildkiteClient()
 	if err != nil {
 		return err
 	}
-	client.GetRecentBuilds("lexer")
+	err = client.GetRecentBuilds("lexer")
+	if err != nil {
+		return err
+	}
 
 	listConfig := list.Config{
 		Items:     client.Builds,
@@ -90,10 +119,16 @@ func run() error {
 		}
 
 		if searchMode {
-			header := fmt.Sprintf("Search: %s%s", string(searchInput), screen.Cursor)
-			t.WriteString(header)
+			header := fmt.Sprintf(color.GreenString("Search: %s%s"), string(searchInput), screen.Cursor)
+			_, err = t.WriteString(header)
+			if err != nil {
+				fmt.Println(err)
+			}
 		} else {
-			t.WriteString("Use the arrow keys to navigate: ↓ ↑ ← → / toggles search ↵ jump to the build")
+			_, err = t.WriteString(color.BlueString("Use the arrow keys to navigate: ↓ ↑ ← → / toggles search ↵ jumps to the build"))
+			if err != nil {
+				fmt.Println(err)
+			}
 		}
 
 		items, active := l.Items()
@@ -123,20 +158,32 @@ func run() error {
 				output = append(output, l.Render(item, "Inactive")...)
 			}
 
-			t.Write(output)
+			_, err = t.Write(output)
+			if err != nil {
+				fmt.Println(err)
+			}
 
 		}
 
 		if active == list.NotFound {
-			t.Write([]byte("note found"))
+			_, err = t.Write([]byte("note found"))
+			if err != nil {
+				fmt.Println(err)
+			}
 		} else {
 			details := l.RenderDetails(items[active])
 			for _, b := range details {
-				t.Write(b)
+				_, err = t.Write(b)
+				if err != nil {
+					fmt.Println(err)
+				}
 			}
 		}
 
-		t.Flush()
+		err = t.Flush()
+		if err != nil {
+			fmt.Println(err)
+		}
 
 		return nil, 0, true
 	})
@@ -164,5 +211,16 @@ func run() error {
 }
 
 func main() {
-	fmt.Printf("Error: %v", run())
+	flag.Parse()
+	if helpBool {
+		flag.PrintDefaults()
+		os.Exit(0)
+	}
+	arg := flag.Arg(1)
+	switch arg {
+	case "init":
+		//set up
+	default:
+		fmt.Printf("Error: %v", run())
+	}
 }

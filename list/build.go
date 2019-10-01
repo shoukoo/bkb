@@ -91,7 +91,8 @@ func reMapToBuild(b []buildkite.Build) []Build {
 	var builds []Build
 
 	for _, v := range b {
-		elapsed := time.Now().Sub(v.CreatedAt.Time)
+		elapsed := time.Since(v.CreatedAt.Time)
+		created := v.CreatedAt.Local().Format("Monday, 2-January-2006")
 		build := Build{
 			Message:      *v.Message,
 			Branch:       *v.Branch,
@@ -100,7 +101,7 @@ func reMapToBuild(b []buildkite.Build) []Build {
 			Commit:       *v.Commit,
 			Creator:      v.Creator.Name,
 			CreatorEmail: v.Creator.Email,
-			CreatedAt:    v.CreatedAt.Local().String(),
+			CreatedAt:    created,
 			Elapsed:      elapsed.Truncate(time.Second).String(),
 			ENV:          fmt.Sprintf("%v", v.Env),
 			WebURL:       *v.WebURL,
@@ -114,14 +115,14 @@ func reMapToBuild(b []buildkite.Build) []Build {
 
 func (c *Client) Templates() *SelectTemplates {
 	return &SelectTemplates{
-		Active:   `{{"▶" | cyan}} [ {{.Branch | blue}} | {{.Status | yellow}} | {{.Elapsed | magenta}} ] {{.Pipeline}} `,
-		Inactive: `  [ {{.Branch | blue}} | {{.Status | yellow}} | {{.Elapsed | magenta}} ] {{.Pipeline}}`,
+		Active:   `{{"▶" | cyan}} [ {{.Branch | cyan}} | {{.Status | cyan}} ] {{.Pipeline | cyan}} `,
+		Inactive: `  [ {{.Branch}} | {{.Status}} ] {{.Pipeline}}`,
 		Details: `
-{{"-------------- info --------------"}}
+{{"---------------------------------------------" | blue}}
 Message: {{.Message}}
-Branch:  {{.Branch | blue}}
-Status:  {{.Status | yellow}}
-Age:     {{.Elapsed | magenta}}
+Branch:  {{.Branch}}
+Status:  {{.Status}}
+Age:     {{.Elapsed}}
 Commit:  {{.Commit}}
 Creator: {{.Creator}} ({{.CreatorEmail}})
 Started: {{.CreatedAt}}

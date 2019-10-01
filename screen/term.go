@@ -10,7 +10,6 @@ type Terminal struct {
 	w      io.Writer
 	buf    *bytes.Buffer
 	reset  bool
-	flush  bool
 	cursor int
 	height int
 }
@@ -57,8 +56,11 @@ func (t *Terminal) Write(b []byte) (int, error) {
 		if err != nil {
 			return n, err
 		}
-		line := append(b, []byte("\n")...)
-		n, err = t.buf.Write(line)
+		n, err = t.buf.Write(b)
+		if err != nil {
+			return n, err
+		}
+		n, err = t.buf.Write([]byte("\n"))
 		if err != nil {
 			return n, err
 		}
@@ -81,7 +83,7 @@ func (t *Terminal) Write(b []byte) (int, error) {
 		t.cursor++
 		return n, nil
 	default:
-		return 0, fmt.Errorf("Invalid write cursor position (%d) exceeded line height: %d", t.cursor, t.height)
+		return 0, fmt.Errorf("invalid write cursor position (%d) exceeded line height: %d", t.cursor, t.height)
 	}
 }
 
