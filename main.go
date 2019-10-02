@@ -291,14 +291,14 @@ func main() {
 	switch arg {
 	case "show":
 		err := show()
-		if err != err {
+		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
 		os.Exit(0)
 	case "init":
 		err := setup()
-		if err != err {
+		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
