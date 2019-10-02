@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/99designs/keyring"
 	"github.com/chzyer/readline"
@@ -16,31 +18,25 @@ import (
 var (
 	helpBool    bool
 	versionBool bool
+	version     string
+	desc        string
 )
 
 func init() {
-	flag.BoolVar(&helpBool, "help", false, "help")
-	flag.BoolVar(&helpBool, "h", false, "help (shorthand)")
-	flag.BoolVar(&versionBool, "version", false, "version")
-	flag.BoolVar(&versionBool, "v", false, "version (shorthand)")
+	version = "0.1.0"
+	desc = `
+Usage of bbk:
+  bbk [flags] # run buildkite beaver
+  bbk init # set token and org
+  bbk show # show existing token and org
+
+`
+	flag.BoolVar(&helpBool, "help", false, "Print help and exist")
+	flag.BoolVar(&versionBool, "version", false, "Print version and exit")
 }
 
 func run() error {
 
-	ring, _ := keyring.Open(keyring.Config{
-		ServiceName: "buildkite-beaver",
-	})
-
-	_ = ring.Set(keyring.Item{
-		Key:  "token",
-		Data: []byte("testt"),
-	})
-
-	i, _ := ring.Get("token")
-
-	fmt.Printf("%s", i.Data)
-
-	os.Exit(1)
 	stdin := readline.NewCancelableStdin(os.Stdin)
 	c := &readline.Config{}
 	err := c.Init()
@@ -210,17 +206,104 @@ func run() error {
 
 }
 
+// setup uses keyring library from github.com/99designs/keyring
+// to save credential in OSX Keychain or Windows credential store
+func setup() error {
+	fmt.Println(color.BlueString("Visit https://buildkite.com/user/api-access-tokens to get a new token"))
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Println(color.GreenString("Enter your org name:"))
+	org, err := reader.ReadString('\n')
+	if err != nil {
+		return err
+	}
+	fmt.Println(color.GreenString("Enter your Buildkite token:"))
+	token, err := reader.ReadString('\n')
+	if err != nil {
+		return err
+	}
+
+	ring, err := keyring.Open(keyring.Config{
+		ServiceName: "buildkite-beaver",
+	})
+	if err != nil {
+		return err
+	}
+
+	err = ring.Set(keyring.Item{
+		Key:  "org",
+		Data: []byte(strings.Trim(org, "\n")),
+	})
+	if err != nil {
+		return err
+	}
+
+	err = ring.Set(keyring.Item{
+		Key:  "token",
+		Data: []byte(strings.Trim(token, "\n")),
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func show() error {
+	ring, err := keyring.Open(keyring.Config{
+		ServiceName: "buildkite-beaver",
+	})
+	if err != nil {
+		return err
+	}
+
+	token, err := ring.Get("token")
+	if err != nil {
+		return err
+	}
+
+	org, err := ring.Get("org")
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("token: %s...\n", token.Data[:7])
+	fmt.Printf("org: %s", org.Data)
+
+	return nil
+}
+
 func main() {
 	flag.Parse()
+
 	if helpBool {
+		fmt.Printf("%v", desc)
+		fmt.Println("Flags:")
 		flag.PrintDefaults()
 		os.Exit(0)
 	}
-	arg := flag.Arg(1)
+
+	if versionBool {
+		fmt.Printf("bkb v%v\n", version)
+		os.Exit(0)
+	}
+
+	arg := flag.Arg(0)
 	switch arg {
+	case "show":
+		err := show()
+		if err != err {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		os.Exit(0)
 	case "init":
-		//set up
+		err := setup()
+		if err != err {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		os.Exit(0)
 	default:
-		fmt.Printf("Error: %v", run())
+		fmt.Printf("Error: %v\n", run())
 	}
 }

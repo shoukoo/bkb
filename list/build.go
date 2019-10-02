@@ -2,17 +2,18 @@ package list
 
 import (
 	"fmt"
-	"os"
 	"os/exec"
 	"runtime"
 	"time"
 
+	"github.com/99designs/keyring"
 	"github.com/buildkite/go-buildkite/buildkite"
 )
 
 type Client struct {
 	BKClient *buildkite.Client
 	Builds   []Build
+	Org      string
 }
 
 type Build struct {
@@ -30,20 +31,32 @@ type Build struct {
 }
 
 func BuildkiteClient() (*Client, error) {
-	token := os.Getenv("TOKEN")
 
-	if token == "" {
-		return nil, fmt.Errorf("TOKEN env variable is missing, please go https://buildkite.com/user/api-access-tokens to get a new token")
+	ring, err := keyring.Open(keyring.Config{
+		ServiceName: "buildkite-beaver",
+	})
+	if err != nil {
+		return nil, err
 	}
 
-	config, err := buildkite.NewTokenConfig(token, false)
+	token, err := ring.Get("token")
+	if err != nil {
+		return nil, err
+	}
 
+	org, err := ring.Get("org")
+	if err != nil {
+		return nil, err
+	}
+
+	config, err := buildkite.NewTokenConfig(string(token.Data), false)
 	if err != nil {
 		return nil, err
 	}
 
 	client := &Client{
 		BKClient: buildkite.NewClient(config.Client()),
+		Org:      string(org.Data),
 	}
 
 	return client, nil
