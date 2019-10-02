@@ -267,7 +267,7 @@ func show() error {
 	}
 
 	fmt.Printf("token: %s...\n", token.Data[:7])
-	fmt.Printf("org: %s", org.Data)
+	fmt.Printf("org: %s\n", org.Data)
 
 	return nil
 }
