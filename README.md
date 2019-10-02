@@ -1,6 +1,6 @@
 <img src="https://github.com/shoukoo/bkb/workflows/build/badge.svg" class="image mod-full-width" /> <img src="https://img.shields.io/github/v/release/shoukoo/bkb?sort=semver" class="image mod-full-width" />
 
-# bkb - `Buildkite Beaver
+# bkb - Buildkite Beaver
 A CLI tool to search recent Buildkite builds
 
 ## Install
