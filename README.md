@@ -4,13 +4,26 @@
 A CLI tool to search recent Buildkite builds
 
 ## Install
-
-MAC OS
+OSX
 ```
 brew tap shoukoo/taps
 brew install bkb
 ```
 Linux & Windows can download the release on this page - https://github.com/shoukoo/bkb/releases
+
+## Usage
+```
+Usage of bbk:
+  bbk [flags] # run buildkite beaver
+  bbk init # set token and org
+  bbk show # show existing token and org
+
+Flags:
+  -help
+        Print help and exist
+  -version
+        Print version and exit
+```
 
 ## Start
 
