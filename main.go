@@ -23,7 +23,7 @@ var (
 )
 
 func init() {
-	version = "0.1.0"
+	version = "0.1.5"
 	desc = `
 Usage of bbk:
   bbk [flags] # run buildkite beaver
