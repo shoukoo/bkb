@@ -17,11 +17,9 @@ var (
 	versionBool bool
 	version     string
 	desc        string
-	serviceName string
 )
 
 func init() {
-	serviceName = "xxbuildkite-beaver"
 	version = "0.1.8"
 	desc = `
 Usage of bbk:
