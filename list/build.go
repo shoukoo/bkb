@@ -2,11 +2,11 @@ package list
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"runtime"
 	"time"
 
-	"github.com/99designs/keyring"
 	"github.com/buildkite/go-buildkite/buildkite"
 )
 
@@ -32,31 +32,24 @@ type Build struct {
 
 func BuildkiteClient() (*Client, error) {
 
-	ring, err := keyring.Open(keyring.Config{
-		ServiceName: "buildkite-beaver",
-	})
-	if err != nil {
-		return nil, err
+	token := os.Getenv("BKBREAVER_TOKEN")
+	if token == "" {
+		return nil, fmt.Errorf("BKBREAVER_TOKEN env variable is missing")
 	}
 
-	token, err := ring.Get("token")
-	if err != nil {
-		return nil, err
+	org := os.Getenv("BKBREAVER_ORG")
+	if org == "" {
+		return nil, fmt.Errorf("BKBREAVER_ORG env variable is missing")
 	}
 
-	org, err := ring.Get("org")
-	if err != nil {
-		return nil, err
-	}
-
-	config, err := buildkite.NewTokenConfig(string(token.Data), false)
+	config, err := buildkite.NewTokenConfig(string(token), false)
 	if err != nil {
 		return nil, err
 	}
 
 	client := &Client{
 		BKClient: buildkite.NewClient(config.Client()),
-		Org:      string(org.Data),
+		Org:      org,
 	}
 
 	return client, nil
@@ -106,14 +99,20 @@ func reMapToBuild(b []buildkite.Build) []Build {
 	for _, v := range b {
 		elapsed := time.Since(v.CreatedAt.Time)
 		created := v.CreatedAt.Local().Format("Monday, 2-January-2006")
+		var creator string
+		var email string
+		if v.Creator != nil {
+			creator = v.Creator.Name
+			email = v.Creator.Email
+		}
 		build := Build{
 			Message:      *v.Message,
 			Branch:       *v.Branch,
 			Pipeline:     *v.Pipeline.Slug,
 			Status:       *v.State,
 			Commit:       *v.Commit,
-			Creator:      v.Creator.Name,
-			CreatorEmail: v.Creator.Email,
+			Creator:      creator,
+			CreatorEmail: email,
 			CreatedAt:    created,
 			Elapsed:      elapsed.Truncate(time.Second).String(),
 			ENV:          fmt.Sprintf("%v", v.Env),

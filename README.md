@@ -14,8 +14,6 @@ Linux & Windows can download the release on this page - https://github.com/shouk
 ## Usage
 ```
 Usage of bbk:
-  bbk [flags] # run buildkite beaver
-  bbk init # set token and org
   bbk show # show existing token and org
 
 Flags:
@@ -26,11 +24,7 @@ Flags:
 ```
 
 ## Start
-
 Visit this page first to get a token - https://buildkite.com/user/api-access-tokens 
-
-```
-bkb init # to save org name and token in keyring 
-bkb # to get the recent builds
-```
+set token to `BKBREAVER_TOKEN` env variable
+set org name to BKBREAVER_ORG env variable
 

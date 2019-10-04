@@ -1,14 +1,11 @@
 package main
 
 import (
-	"bufio"
 	"flag"
 	"fmt"
 	"io"
 	"os"
-	"strings"
 
-	"github.com/99designs/keyring"
 	"github.com/chzyer/readline"
 	"github.com/fatih/color"
 	"github.com/shoukoo/bkb/list"
@@ -20,15 +17,15 @@ var (
 	versionBool bool
 	version     string
 	desc        string
+	serviceName string
 )
 
 func init() {
+	serviceName = "xxbuildkite-beaver"
 	version = "0.1.7"
 	desc = `
 Usage of bbk:
   bbk [flags] # run buildkite beaver
-  bbk init # set token and org
-  bbk show # show existing token and org
 
 `
 	flag.BoolVar(&helpBool, "help", false, "Print help and exist")
@@ -206,72 +203,6 @@ func run() error {
 
 }
 
-// setup uses keyring library from github.com/99designs/keyring
-// to save credential in OSX Keychain or Windows credential store
-func setup() error {
-	fmt.Println(color.BlueString("Visit https://buildkite.com/user/api-access-tokens to get a new token"))
-	reader := bufio.NewReader(os.Stdin)
-	fmt.Println(color.GreenString("Enter your org name:"))
-	org, err := reader.ReadString('\n')
-	if err != nil {
-		return err
-	}
-	fmt.Println(color.GreenString("Enter your Buildkite token:"))
-	token, err := reader.ReadString('\n')
-	if err != nil {
-		return err
-	}
-
-	ring, err := keyring.Open(keyring.Config{
-		ServiceName: "buildkite-beaver",
-	})
-	if err != nil {
-		return err
-	}
-
-	err = ring.Set(keyring.Item{
-		Key:  "org",
-		Data: []byte(strings.Trim(org, "\n")),
-	})
-	if err != nil {
-		return err
-	}
-
-	err = ring.Set(keyring.Item{
-		Key:  "token",
-		Data: []byte(strings.Trim(token, "\n")),
-	})
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func show() error {
-	ring, err := keyring.Open(keyring.Config{
-		ServiceName: "buildkite-beaver",
-	})
-	if err != nil {
-		return err
-	}
-
-	token, err := ring.Get("token")
-	if err != nil {
-		return err
-	}
-
-	org, err := ring.Get("org")
-	if err != nil {
-		return err
-	}
-
-	fmt.Printf("token: %s...\n", token.Data[:7])
-	fmt.Printf("org: %s\n", org.Data)
-
-	return nil
-}
-
 func main() {
 	flag.Parse()
 
@@ -287,23 +218,5 @@ func main() {
 		os.Exit(0)
 	}
 
-	arg := flag.Arg(0)
-	switch arg {
-	case "show":
-		err := show()
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-		os.Exit(0)
-	case "init":
-		err := setup()
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-		os.Exit(0)
-	default:
-		fmt.Printf("Error: %v\n", run())
-	}
+	fmt.Printf("Error: %v\n", run())
 }
