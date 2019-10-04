@@ -22,7 +22,7 @@ var (
 
 func init() {
 	serviceName = "xxbuildkite-beaver"
-	version = "0.1.7"
+	version = "0.1.8"
 	desc = `
 Usage of bbk:
   bbk [flags] # run buildkite beaver
