@@ -5,3 +5,4 @@ branches:
 
 script:
 - echo "hello"
+- echo "hello2"
